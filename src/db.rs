@@ -1,5 +1,6 @@
 use surrealdb::{Datastore, Session };
 
+#[derive(Clone)]
 pub struct App {
     pub db: Datastore,
     pub session: Session,

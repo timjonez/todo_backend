@@ -1,5 +1,5 @@
 mod models;
 mod routes;
 
-pub use routes::hello;
+pub use routes::get_list;
 
