@@ -1,25 +1,19 @@
 use surrealdb::{Datastore, Session };
 
-#[derive(Clone)]
-pub struct App {
-    pub db: Datastore,
-    pub session: Session,
+pub async fn setup_db() -> (Datastore, Session) {
+    let db = get_database().await;
+    let session = get_session().await;
+
+    (db, session)
 }
 
-pub async fn setup() -> App {
-    App {
-        db: get_database().await,
-        session: get_session().await,
-    }
-}
-
-async fn get_database() -> Datastore {
+pub async fn get_database() -> Datastore {
     Datastore::new("file:/home/tim/Coding/Projects/rusty_todo/todo_backend/test.db")
         .await
         .unwrap()
 }
 
-async fn get_session() -> Session {
+pub async fn get_session() -> Session {
     Session::for_kv().with_ns("test_ns").with_db("test_db")
 }
 
