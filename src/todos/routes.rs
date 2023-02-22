@@ -1,13 +1,14 @@
-use actix_web::{get, web, HttpResponse, Responder};
-use crate::db::App;
+use actix_web::{get, HttpResponse, Responder};
+use crate::db::setup_db;
 
 #[get("/")]
-pub async fn get_list(db: web::Data<App>) -> impl Responder {
+pub async fn get_list() -> impl Responder {
+    let (db, session) = setup_db().await;
+
     let query = "select * from todo";
-    let res = &db.db.execute(query, &db.session, None, false)
+    let res = db.execute(query, &session, None, false)
         .await
         .unwrap();
 
-
-    HttpResponse::Ok().json(res)
+    HttpResponse::Ok().json(res.first().unwrap().output().unwrap())
 }
