@@ -1,5 +1,6 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use crate::db::setup_db;
+use surrealdb::sql::thing;
 
 #[get("/todos")]
 pub async fn get_list() -> impl Responder {
@@ -15,12 +16,13 @@ pub async fn get_list() -> impl Responder {
 
 #[get("/todos/{id}")]
 pub async fn get_todo(path: web::Path<String>) -> impl Responder {
-    let id = path.into_inner();
-
     let (db, session) = setup_db().await;
 
-    let query = format!("select * from todo where id = 'todo:{}'", id);
-    let res = db.execute(&query, &session, None, false)
+    let query = "select * from todo where id = $id ;";
+    let id = thing(format!("todo:{}", path.into_inner()).as_str()).unwrap();
+    let vars = [("id".into(), id.into())].into();
+
+    let res = db.execute(&query, &session, Some(vars), false)
         .await
         .unwrap();
 
