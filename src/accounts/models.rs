@@ -5,12 +5,37 @@ use passwords::{analyzer, hasher};
 use serde::__private::de;
 use surrealdb::sql::{Value, Part};
 
+use surrealdb::{Datastore, Session};
+use crate::db::{get_database, get_session};
+
+
+pub trait Model {
+    fn db() -> Datastore {
+        get_database().await
+    }
+    fn session() -> Session {
+        get_session().await
+    }
+    fn get_one() {}
+    fn get_all() {}
+    fn create() {}
+    fn update() {}
+    fn delete() {}
+}
+
+
 pub struct Password {
     hashed_password: String,
 }
 
 impl Password {
-    pub fn new(password: String) -> Result<Password, Vec<String>> {
+    pub fn new(password: String) -> Password {
+        Password {
+            hashed_password: password
+        }
+    }
+
+    pub fn create_new(password: String) -> Result<Password, Vec<String>> {
         let mut errors = vec![];
         let analyzed = analyzer::analyze(password.clone());
         if &analyzed.length() < &8 {
