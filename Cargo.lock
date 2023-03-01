@@ -3138,6 +3138,7 @@ dependencies = [
  "email_address",
  "passwords",
  "serde",
+ "serde_json",
  "surrealdb",
  "tokio",
 ]
