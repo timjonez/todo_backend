@@ -1,4 +1,4 @@
-use surrealdb::{Datastore, Session };
+use surrealdb::{Datastore, Session};
 
 pub async fn setup_db() -> (Datastore, Session) {
     let db = get_database().await;
@@ -16,7 +16,6 @@ pub async fn get_database() -> Datastore {
 pub async fn get_session() -> Session {
     Session::for_kv().with_ns("test_ns").with_db("test_db")
 }
-
 
 //let query = "CREATE company:surrealdb SET name = 'SurrealDB', cofounders = [person:tobie, person:jaime];";
 // let query = "Select * from account;";
