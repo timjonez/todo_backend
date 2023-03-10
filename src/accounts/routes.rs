@@ -1,7 +1,6 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
-use crate::db::setup_db;
+use actix_web::{ post, web, HttpResponse, Responder};
+use crate::base::setup_db;
 use crate::accounts::models::User;
-use surrealdb::sql::thing;
 use email_address::EmailAddress;
 use std::collections::HashMap;
 
