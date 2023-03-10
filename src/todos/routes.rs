@@ -1,4 +1,4 @@
-use crate::db::setup_db;
+use crate::base::setup_db;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use surrealdb::sql::thing;
 
