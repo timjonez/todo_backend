@@ -2,27 +2,9 @@ use std::str::FromStr;
 use chrono::{DateTime, Utc};
 use email_address::EmailAddress;
 use passwords::{analyzer, hasher};
-use serde::__private::de;
-use surrealdb::sql::{Value, Part};
-
-use surrealdb::{Datastore, Session};
-use crate::db::{get_database, get_session};
-
-
-pub trait Model {
-    fn db() -> Datastore {
-        get_database().await
-    }
-    fn session() -> Session {
-        get_session().await
-    }
-    fn get_one() {}
-    fn get_all() {}
-    fn create() {}
-    fn update() {}
-    fn delete() {}
-}
-
+use surrealdb::sql::Value;
+use async_trait::async_trait;
+use crate::base::{Model, Arg};
 
 pub struct Password {
     hashed_password: String,
@@ -84,7 +66,7 @@ pub struct User {
 impl User {
     pub fn new(email: String, password: String, name: String) -> Result<User, Vec<String>> {
         let valid_email = EmailAddress::from_str(email.as_str()).expect("bad email");
-        let hashed_password = Password::new(password)?;
+        let hashed_password = Password::new(password);
 
         let user = User {
             email: valid_email,
@@ -99,27 +81,43 @@ impl User {
         Ok(user)
     }
 
-    pub fn get(email: String) -> Result<User, Vec<String>> {
-        let valid_email = EmailAddress::from_str(email.as_str()).expect("bad email");
-        let password = Password::new("Test1".to_string())?;
-        let user = Self {
-            email: valid_email,
-            password: password,
-            name: "Test".to_string(),
-            is_admin: false,
-            is_active: true,
-            created: Utc::now(),
-            modified: Utc::now(),
-        };
-        Ok(user)
-    }
-
     pub fn into_btree_map(self) -> std::collections::BTreeMap<String, surrealdb::sql::Value> {
         [
             ("email".to_string(), self.email.to_string().into()),
             ("name".to_string(), self.name.into()),
         ].into()
     }
+}
+
+#[async_trait]
+impl Model<User> for User {
+    async fn get(args: Arg) -> Result<User, String> {
+        let db = Self::db().await;
+        let session = Self::session().await;
+
+        let where_clause = format!("{} {:?} {}", args.field, args.lookup, args.value);
+        let query = "SELECT * FROM users where $where_clause;";
+
+        let vars = [("where_clause".into(), where_clause.into())].into();
+        let res = match db.execute(query, &session, Some(vars), false).await {
+            Err(e) => { return Err(e.to_string()) },
+            Ok(r) => r
+        };
+
+        let user: User = match res.len() {
+            0 => return Err("User not found".to_string()),
+            1 => {
+                let user = User::from(res.first().expect("err1").result.as_ref().expect("err2").clone());
+                return Ok(user)
+            },
+            _ => return Err("Multiple users found".to_string())
+        };
+    }
+    // async fn get_all(args: Arg) -> Vec<User> {}
+    // async fn create(&self) -> User {}
+    // async fn update(&self) -> User {}
+    // async fn delete(&self) -> bool {}
+
 }
 
 impl From<surrealdb::sql::Value> for User {
@@ -134,7 +132,7 @@ impl From<surrealdb::sql::Value> for User {
             },
             Value::Object(d) => {
                 let email = EmailAddress::from_str(d.get("email").unwrap().clone().as_string().as_str()).expect("bad email");
-                let password = Password::new(d.get("password").unwrap().clone().as_string()).unwrap();
+                let password = Password::new(d.get("password").unwrap().clone().as_string());
                 return User {
                     email,
                     name: d.get("name").unwrap().clone().as_string(),
