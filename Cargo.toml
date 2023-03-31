@@ -15,3 +15,7 @@ serde = "1.0.152"
 passwords = { version = "3.1.12", features = ["crypto", "common-password"]}
 serde_json = "1.0.93"
 async-trait = "0.1.64"
+dotenv = "0.15.0"
+jsonwebtoken = "8.3.0"
+futures = "0.3.27"
+futures-util = "0.3.27"
