@@ -1,10 +1,10 @@
-use std::str::FromStr;
+use crate::base::{Arg, Model};
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use email_address::EmailAddress;
 use passwords::{analyzer, hasher};
+use std::str::FromStr;
 use surrealdb::sql::Value;
-use async_trait::async_trait;
-use crate::base::{Model, Arg};
 
 pub struct Password {
     hashed_password: String,
@@ -13,7 +13,7 @@ pub struct Password {
 impl Password {
     pub fn new(password: String) -> Password {
         Password {
-            hashed_password: password
+            hashed_password: password,
         }
     }
 
@@ -36,9 +36,7 @@ impl Password {
 
     pub fn check_password(&self, password: &String) -> bool {
         println!("check password now");
-        unsafe {
-            hasher::identify_bcrypt_format(&password.as_str(), &self.hashed_password)
-        }
+        unsafe { hasher::identify_bcrypt_format(&password.as_str(), &self.hashed_password) }
     }
 
     fn hash_password(password: &String) -> String {
@@ -53,6 +51,7 @@ impl Password {
 
 #[derive(serde::Serialize)]
 pub struct User {
+    pub id: String,
     pub email: EmailAddress,
     #[serde(skip_serializing)]
     pub password: Password,
@@ -69,6 +68,7 @@ impl User {
         let hashed_password = Password::new(password);
 
         let user = User {
+            id: "esutoaheusthoeu".to_string(),
             email: valid_email,
             password: hashed_password,
             name,
@@ -85,7 +85,8 @@ impl User {
         [
             ("email".to_string(), self.email.to_string().into()),
             ("name".to_string(), self.name.into()),
-        ].into()
+        ]
+        .into()
     }
 }
 
@@ -100,40 +101,48 @@ impl Model<User> for User {
 
         let vars = [("where_clause".into(), where_clause.into())].into();
         let res = match db.execute(query, &session, Some(vars), false).await {
-            Err(e) => { return Err(e.to_string()) },
-            Ok(r) => r
+            Err(e) => return Err(e.to_string()),
+            Ok(r) => r,
         };
 
-        let user: User = match res.len() {
+        match res.len() {
             0 => return Err("User not found".to_string()),
             1 => {
-                let user = User::from(res.first().expect("err1").result.as_ref().expect("err2").clone());
-                return Ok(user)
-            },
-            _ => return Err("Multiple users found".to_string())
+                let user = User::from(
+                    res.first()
+                        .expect("err1")
+                        .result
+                        .as_ref()
+                        .expect("err2")
+                        .clone(),
+                );
+                return Ok(user);
+            }
+            _ => return Err("Multiple users found".to_string()),
         };
     }
     // async fn get_all(args: Arg) -> Vec<User> {}
     // async fn create(&self) -> User {}
     // async fn update(&self) -> User {}
     // async fn delete(&self) -> bool {}
-
 }
 
 impl From<surrealdb::sql::Value> for User {
     fn from(value: surrealdb::sql::Value) -> Self {
-
         match value {
             Value::Array(d) => {
                 for val in d.as_slice().iter() {
-                    return User::from(val.clone())
+                    return User::from(val.clone());
                 }
                 panic!("Empty array from db")
-            },
+            }
             Value::Object(d) => {
-                let email = EmailAddress::from_str(d.get("email").unwrap().clone().as_string().as_str()).expect("bad email");
+                let email =
+                    EmailAddress::from_str(d.get("email").unwrap().clone().as_string().as_str())
+                        .expect("bad email");
                 let password = Password::new(d.get("password").unwrap().clone().as_string());
                 return User {
+                    id: d.get("id").unwrap().clone().as_string(),
                     email,
                     name: d.get("name").unwrap().clone().as_string(),
                     password,
@@ -141,10 +150,11 @@ impl From<surrealdb::sql::Value> for User {
                     is_active: false,
                     created: Utc::now(),
                     modified: Utc::now(),
-                }
-            },
-            _ => { panic!("Unable to convert db values to User") }
+                };
+            }
+            _ => {
+                panic!("Unable to convert db values to User")
+            }
         }
     }
-
 }
