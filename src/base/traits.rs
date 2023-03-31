@@ -1,7 +1,6 @@
+use crate::base::{get_database, get_session};
 use async_trait::async_trait;
 use surrealdb::{Datastore, Session};
-use crate::base::{get_database, get_session};
-
 
 #[async_trait]
 pub trait Model<T> {
@@ -23,11 +22,11 @@ pub enum Lookup {
     Exact,
     IExact,
     Contains,
-    IContains
+    IContains,
 }
 
 pub struct Arg {
     pub field: String,
     pub value: String,
-    pub lookup: Lookup
+    pub lookup: Lookup,
 }
