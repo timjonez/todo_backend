@@ -6,6 +6,7 @@ use actix_web::{
     Error, HttpResponse,
 };
 use futures_util::future::{ready, LocalBoxFuture, Ready};
+use crate::base::ErrorResponse;
 
 pub struct Auth;
 
@@ -56,7 +57,9 @@ where
             Box::pin(async move {
                 let mut response_builder = HttpResponse::Unauthorized();
                 response_builder.insert_header((header::CONTENT_TYPE, "text/plain"));
-                let res = response_builder.body("Unauthorized");
+                let res = response_builder
+                    .content_type(header::ContentType::json())
+                    .json(ErrorResponse::new("Unauthorized".to_string()));
                 let response: Self::Response = req.into_response(res);
                 Ok(response)
             })
