@@ -5,6 +5,7 @@ use todo_backend::todos::{get_list, get_todo};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init();
     HttpServer::new(|| {
         App::new()
             .wrap(Auth)
