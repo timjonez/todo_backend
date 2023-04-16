@@ -1,6 +1,6 @@
 use crate::accounts::models::User;
 use crate::base::setup_db;
-use crate::base::{check_token, get_token};
+use crate::base::{check_token, get_token, Arg, Lookup, Model};
 use actix_web::{get, post, web, HttpResponse, Responder};
 use email_address::EmailAddress;
 use serde_json::json;
@@ -17,7 +17,15 @@ pub struct CreateUserPayload {
 
 #[get("/user/")]
 pub async fn get_current_user(user: web::ReqData<Option<String>>,) -> impl Responder {
-    format!("TEST {:?}", user.as_ref().unwrap())
+    //let (db, session) = setup_db().await;
+    println!("---> {:?}", user);
+    let arg = Arg {
+        field: "id".to_string(),
+        value: user.as_ref().unwrap().clone(),
+        lookup: Lookup::Exact,
+    };
+    let user = User::get(arg).await.unwrap();
+    HttpResponse::Ok().json(user)
 }
 
 #[post("/users/")]

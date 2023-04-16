@@ -5,7 +5,9 @@ use email_address::EmailAddress;
 use passwords::{analyzer, hasher};
 use std::str::FromStr;
 use surrealdb::sql::Value;
+use serde::{Serialize, Deserialize};
 
+ #[derive(Default)]
 pub struct Password {
     hashed_password: String,
 }
@@ -49,11 +51,12 @@ impl Password {
     }
 }
 
-#[derive(serde::Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct User {
     pub id: String,
     pub email: EmailAddress,
     #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub password: Password,
     pub name: String,
     pub is_admin: bool,
@@ -96,8 +99,8 @@ impl Model<User> for User {
         let db = Self::db().await;
         let session = Self::session().await;
 
-        let where_clause = format!("{} {:?} {}", args.field, args.lookup, args.value);
-        let query = "SELECT * FROM users where $where_clause;";
+        let where_clause = format!("{} = '{}'", args.field, args.value); // TODO fix this
+        let query = "SELECT * FROM user where $where_clause;";
 
         let vars = [("where_clause".into(), where_clause.into())].into();
         let res = match db.execute(query, &session, Some(vars), false).await {
