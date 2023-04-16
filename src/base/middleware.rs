@@ -7,6 +7,7 @@ use actix_web::{
 };
 use futures_util::future::{ready, LocalBoxFuture, Ready};
 use crate::base::ErrorResponse;
+use actix_web::HttpMessage;
 
 pub struct Auth;
 
@@ -71,7 +72,9 @@ where
                 let token = header.clone().to_str().unwrap().to_string();
                 match check_token(token.replace("Bearer ", "")) {
                     Err(_) => return reject(req),
-                    _ => {
+                    Ok(d) => {
+                        req.extensions_mut().insert(Some(d.claims.id));
+
                         let fut = self.service.call(req);
                         return Box::pin(async move {
                             let res = fut.await?;
