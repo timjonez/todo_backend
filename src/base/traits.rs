@@ -30,3 +30,16 @@ pub struct Arg {
     pub value: String,
     pub lookup: Lookup,
 }
+
+impl Arg {
+    pub fn format_query(&self) -> String {
+        match self.lookup {
+            Lookup::Exact => {
+                return format!("{} = '{}'", self.field, self.value)
+            }
+            _ => {
+                return format!("Not implemented")
+            }
+        }
+    }
+}
