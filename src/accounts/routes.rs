@@ -17,8 +17,6 @@ pub struct CreateUserPayload {
 
 #[get("/user/")]
 pub async fn get_current_user(user: web::ReqData<Option<String>>,) -> impl Responder {
-    //let (db, session) = setup_db().await;
-    println!("---> {:?}", user);
     let arg = Arg {
         field: "id".to_string(),
         value: user.as_ref().unwrap().clone(),
