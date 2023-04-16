@@ -1,16 +1,23 @@
 use crate::accounts::models::User;
 use crate::base::setup_db;
 use crate::base::{check_token, get_token};
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use email_address::EmailAddress;
 use serde_json::json;
 use std::collections::HashMap;
+
 
 #[derive(serde::Deserialize)]
 pub struct CreateUserPayload {
     pub email: EmailAddress,
     pub password: String,
     pub name: String,
+}
+
+
+#[get("/user/")]
+pub async fn get_current_user(user: web::ReqData<Option<String>>,) -> impl Responder {
+    format!("TEST {:?}", user.as_ref().unwrap())
 }
 
 #[post("/users/")]
