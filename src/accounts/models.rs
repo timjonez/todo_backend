@@ -71,7 +71,7 @@ impl User {
         let hashed_password = Password::new(password);
 
         let user = User {
-            id: "esutoaheusthoeu".to_string(),
+            id: "".to_string(),
             email: valid_email,
             password: hashed_password,
             name,
@@ -99,7 +99,7 @@ impl Model<User> for User {
         let db = Self::db().await;
         let session = Self::session().await;
 
-        let where_clause = format!("{} = '{}'", args.field, args.value); // TODO fix this
+        let where_clause = args.format_query();
         let query = "SELECT * FROM user where $where_clause;";
 
         let vars = [("where_clause".into(), where_clause.into())].into();
