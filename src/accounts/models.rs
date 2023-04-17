@@ -70,6 +70,8 @@ impl User {
         let valid_email = EmailAddress::from_str(email.as_str()).expect("bad email");
         let hashed_password = Password::new(password);
 
+        User::create()
+
         let user = User {
             id: "".to_string(),
             email: valid_email,
@@ -105,7 +107,10 @@ impl Model<User> for User {
         let vars = [("where_clause".into(), where_clause.into())].into();
         let res = match db.execute(query, &session, Some(vars), false).await {
             Err(e) => return Err(e.to_string()),
-            Ok(r) => r,
+            Ok(r) => {
+                println!("> {:?}", r);
+                r
+            },
         };
 
         match res.len() {
@@ -125,7 +130,38 @@ impl Model<User> for User {
         };
     }
     // async fn get_all(args: Arg) -> Vec<User> {}
-    // async fn create(&self) -> User {}
+    async fn create(&self, name: String, email: EmailAddress, password: Password, is_admin: bool) -> User {
+        let db = Self::db().await;
+        let session = Self::session().await;
+
+        let query = "
+            CREATE user
+                SET name = $name,
+                email = $email,
+                password = $password,
+                is_admin = $is_admin,
+                is_active = true,
+                created = time::now(),
+                modified = Utc::now(),
+
+        ";
+        let vars = [
+            ("name".into(), name.into()),
+            ("email".into(), email.to_string().into()),
+            ("password".into(), password.password().into()),
+            ("is_admin".into(), is_admin.into()),
+        ]
+        .into();
+        db.execute(&query, &session, Some(vars), false)
+            .await
+            .unwrap();
+        // let vars = [
+        //     ("name".into(), user.name.into()),
+        //     ("email".into(), user.email.to_string().into()),
+        //     ("password".into(), user.password.password().into()),
+        // ]
+        // .into();
+    }
     // async fn update(&self) -> User {}
     // async fn delete(&self) -> bool {}
 }
@@ -144,6 +180,7 @@ impl From<surrealdb::sql::Value> for User {
                     EmailAddress::from_str(d.get("email").unwrap().clone().as_string().as_str())
                         .expect("bad email");
                 let password = Password::new(d.get("password").unwrap().clone().as_string());
+                println!("----> {}", d);
                 return User {
                     id: d.get("id").unwrap().clone().as_string(),
                     email,

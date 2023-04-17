@@ -12,7 +12,7 @@ pub trait Model<T> {
     }
     async fn get(args: Arg) -> Result<T, String>;
     // async fn get_all(args: Arg) -> T;
-    // async fn create(&self) -> T;
+    async fn create(&self) -> T;
     // async fn update(&self) -> T;
     // async fn delete(&self);
 }
