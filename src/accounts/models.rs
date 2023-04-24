@@ -6,8 +6,9 @@ use passwords::{analyzer, hasher};
 use std::str::FromStr;
 use surrealdb::sql::Value;
 use serde::{Serialize, Deserialize};
+use std::collections::BTreeMap;
 
- #[derive(Default)]
+ #[derive(Default, Debug)]
 pub struct Password {
     hashed_password: String,
 }
@@ -37,7 +38,7 @@ impl Password {
     }
 
     pub fn check_password(&self, password: &String) -> bool {
-        println!("check password now");
+        println!("check password now {}", &self.hashed_password);
         unsafe { hasher::identify_bcrypt_format(&password.as_str(), &self.hashed_password) }
     }
 
@@ -69,8 +70,6 @@ impl User {
     pub fn new(email: String, password: String, name: String) -> Result<User, Vec<String>> {
         let valid_email = EmailAddress::from_str(email.as_str()).expect("bad email");
         let hashed_password = Password::new(password);
-
-        User::create()
 
         let user = User {
             id: "".to_string(),
@@ -130,38 +129,35 @@ impl Model<User> for User {
         };
     }
     // async fn get_all(args: Arg) -> Vec<User> {}
-    async fn create(&self, name: String, email: EmailAddress, password: Password, is_admin: bool) -> User {
+    async fn create(mut data: BTreeMap<String, Value>) -> Result<User, String>  {
+        println!("aaaaaa {} -> {}", data["email"], data["password"]);
         let db = Self::db().await;
         let session = Self::session().await;
 
-        let query = "
-            CREATE user
-                SET name = $name,
-                email = $email,
-                password = $password,
-                is_admin = $is_admin,
-                is_active = true,
-                created = time::now(),
-                modified = Utc::now(),
+        let hashed_password = Password::create_new(data.get("password").unwrap().to_string()).expect("Bad password");
+        println!("ccccccccccccc {:?}", hashed_password);
+        data.insert("password".to_string(), hashed_password.password().into());
+        println!("bbbbbbbbbbbbb {}", data["password"]);
 
-        ";
-        let vars = [
-            ("name".into(), name.into()),
-            ("email".into(), email.to_string().into()),
-            ("password".into(), password.password().into()),
-            ("is_admin".into(), is_admin.into()),
-        ]
-        .into();
-        db.execute(&query, &session, Some(vars), false)
-            .await
-            .unwrap();
-        // let vars = [
-        //     ("name".into(), user.name.into()),
-        //     ("email".into(), user.email.to_string().into()),
-        //     ("password".into(), user.password.password().into()),
-        // ]
-        // .into();
+        Err("Not implemented...".to_string())
+
+        // let query = "
+        //     CREATE user
+        //         SET name = $name,
+        //         email = $email,
+        //         password = $password,
+        //         is_admin = $is_admin,
+        //         is_active = true,
+        //         created = time::now(),
+        //         modified = Utc::now(),
+        // ";
+
+        // db.execute(&query, &session, Some(vars), false)
+        //     .await
+        //     .unwrap();
+        
     }
+
     // async fn update(&self) -> User {}
     // async fn delete(&self) -> bool {}
 }

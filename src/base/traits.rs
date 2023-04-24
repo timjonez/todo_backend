@@ -1,6 +1,8 @@
 use crate::base::{get_database, get_session};
 use async_trait::async_trait;
 use surrealdb::{Datastore, Session};
+use surrealdb::sql::Value;
+use std::collections::BTreeMap;
 
 #[async_trait]
 pub trait Model<T> {
@@ -12,7 +14,7 @@ pub trait Model<T> {
     }
     async fn get(args: Arg) -> Result<T, String>;
     // async fn get_all(args: Arg) -> T;
-    async fn create(&self) -> T;
+    async fn create(data: BTreeMap<String, Value>) -> Result<T, String>;
     // async fn update(&self) -> T;
     // async fn delete(&self);
 }

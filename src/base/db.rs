@@ -8,7 +8,7 @@ pub async fn setup_db() -> (Datastore, Session) {
 }
 
 pub async fn get_database() -> Datastore {
-    Datastore::new("file:/home/tim/Coding/Projects/rusty_todo/todo_backend/test.db")
+    Datastore::new("file:./test.db")
         .await
         .unwrap()
 }
